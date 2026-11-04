@@ -55,7 +55,7 @@
 </p>
 
 <p align="center">
-  <img width="98%" alt="贡献活动曲线" src="https://github-readme-activity-graph.vercel.app/graph?username=X1aohj&bg_color=0A0A0A&color=E60012&line=E60012&point=F2F2F2&area=true&hide_border=true" />
+  <img width="98%" alt="贡献活动曲线" src="./assets/activity-graph.svg" />
 </p>
 
 <p align="center">

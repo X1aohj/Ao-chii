@@ -242,7 +242,96 @@ function renderDashboard(repos, langs, totalLangBytes) {
   </svg>`;
 }
 
+async function listPublicEvents() {
+  const events = [];
+
+  for (let page = 1; page <= 3; page += 1) {
+    const url = `https://api.github.com/users/${encodeURIComponent(owner)}/events/public?per_page=100&page=${page}`;
+    const data = await requestJson(url);
+    if (!Array.isArray(data) || data.length === 0) break;
+    events.push(...data);
+    if (data.length < 100) break;
+  }
+
+  return events;
+}
+
+function renderActivityGraph(events) {
+  const dayCount = 31;
+  const now = new Date();
+  const endDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const buckets = new Array(dayCount).fill(0);
+
+  for (const event of events) {
+    const created = new Date(event.created_at);
+    const day = Date.UTC(created.getUTCFullYear(), created.getUTCMonth(), created.getUTCDate());
+    const index = dayCount - 1 - Math.round((endDay - day) / 86400000);
+    if (index < 0 || index >= dayCount) continue;
+    const commits = event.type === "PushEvent" ? (event.payload?.commits?.length || 1) : 1;
+    buckets[index] += Math.max(1, commits);
+  }
+
+  const total = buckets.reduce((sum, value) => sum + value, 0);
+  const activeDays = buckets.filter((value) => value > 0).length;
+  const peak = Math.max(1, ...buckets);
+  const left = 56;
+  const right = 944;
+  const top = 96;
+  const bottom = 196;
+  const x = (index) => left + (index / (dayCount - 1)) * (right - left);
+  const y = (value) => bottom - (value / peak) * (bottom - top);
+  const coordinates = buckets.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`);
+
+  const area = `M ${left},${bottom} L ${coordinates.join(" L ")} L ${right},${bottom} Z`;
+  const dots = buckets.map((value, index) => value > 0
+    ? `<circle cx="${x(index).toFixed(1)}" cy="${y(value).toFixed(1)}" r="3" fill="#f2f2f2" />`
+    : "").join("");
+  const grid = [0, 1, 2, 3, 4].map((step) => {
+    const gy = (top + ((bottom - top) * step) / 4).toFixed(1);
+    return `<line x1="${left}" y1="${gy}" x2="${right}" y2="${gy}" stroke="#7b7b7b" stroke-width="1" opacity="0.28" />`;
+  }).join("");
+  const label = (index) => {
+    const date = new Date(endDay - (dayCount - 1 - index) * 86400000);
+    return `${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(date.getUTCDate()).padStart(2, "0")}`;
+  };
+
+  return `<svg width="980" height="260" viewBox="0 0 980 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+    <title id="title">X1AOHJ activity graph</title>
+    <desc id="desc">Self-generated GitHub public activity for the last 31 days.</desc>
+    <style>text{font-family:'Arial Black',Impact,'Franklin Gothic Heavy',sans-serif;font-weight:900;font-style:italic}</style>
+    <rect width="980" height="260" fill="#0a0a0a" />
+    <polygon points="0,0 424,0 364,72 0,88" fill="#e60012" />
+    <polygon points="760,0 980,0 980,260 684,260" fill="#8a0a14" opacity="0.25" />
+    <path d="M-30 220L220 -20M728 292L1014 -22" stroke="#f2f2f2" stroke-width="10" opacity="0.11" />
+    <g transform="skewX(-8)">
+      <text x="38" y="45" fill="#f2f2f2" font-size="26">ACTIVITY GRAPH</text>
+    </g>
+    <text x="942" y="42" fill="#f2f2f2" opacity="0.72" font-size="13" text-anchor="end">PUBLIC EVENTS / LAST 31 DAYS</text>
+    ${grid}
+    <path d="${area}" fill="#e60012" opacity="0.24" />
+    <polyline points="${coordinates.join(" ")}" fill="none" stroke="#e60012" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
+    ${dots}
+    <text x="${left}" y="216" fill="#7b7b7b" font-size="12">${esc(label(0))}</text>
+    <text x="${((left + right) / 2).toFixed(1)}" y="216" fill="#7b7b7b" font-size="12" text-anchor="middle">${esc(label(15))}</text>
+    <text x="${right}" y="216" fill="#7b7b7b" font-size="12" text-anchor="end">${esc(label(30))}</text>
+    <text x="38" y="244" fill="#7b7b7b" font-size="13">TOTAL <tspan fill="#f2f2f2" font-size="17">${esc(formatNumber(total))}</tspan></text>
+    <text x="360" y="244" fill="#7b7b7b" font-size="13">ACTIVE <tspan fill="#f2f2f2" font-size="17">${esc(activeDays)}D</tspan></text>
+    <text x="640" y="244" fill="#7b7b7b" font-size="13">PEAK <tspan fill="#f2f2f2" font-size="17">${esc(peak)}/DAY</tspan></text>
+  </svg>`;
+}
+
+async function generateActivityGraph() {
+  const events = await listPublicEvents();
+  fs.writeFileSync(path.join(outDir, "activity-graph.svg"), renderActivityGraph(events).trim());
+  console.log(`Generated activity graph from ${events.length} public events.`);
+}
+
 async function main() {
+  if (process.env.PROFILE_STATS_ACTIVITY_ONLY === "1") {
+    await generateActivityGraph();
+    return;
+  }
+
   const repos = await listOwnerRepos();
   const languages = new Map();
   const failedRepos = [];
@@ -272,6 +361,12 @@ async function main() {
   fs.writeFileSync(path.join(outDir, "profile-stats.svg"), renderStatsCard(repos, topLangs).trim());
   fs.writeFileSync(path.join(outDir, "profile-langs.svg"), renderLanguageCard(sortedLangs, totalLangBytes).trim());
   fs.writeFileSync(path.join(outDir, "profile-dashboard.svg"), renderDashboard(repos, sortedLangs, totalLangBytes).trim());
+
+  try {
+    await generateActivityGraph();
+  } catch (error) {
+    console.warn(`Skipped activity graph: ${error.message}`);
+  }
 
   console.log(`Generated profile cards for ${repos.length} public non-fork repositories.`);
   console.log(topLangs.map((lang) => `${lang.name} ${pct(lang.bytes, totalLangBytes)}`).join(", "));

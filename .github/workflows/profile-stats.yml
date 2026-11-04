@@ -34,13 +34,13 @@ jobs:
 
       - name: Commit updated profile stats
         run: |
-          if git diff --quiet -- assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg; then
+          if git diff --quiet -- assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg assets/activity-graph.svg; then
             echo "No profile stats changes."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg
+          git add assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg assets/activity-graph.svg
           git commit -m "Update profile stats snapshot"
           git push
