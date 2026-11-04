@@ -14,7 +14,7 @@ fs.mkdirSync(outDir, { recursive: true });
 
 const baseHeaders = {
   Accept: "application/vnd.github+json",
-  "User-Agent": "ao-chii-profile-readme",
+  "User-Agent": "x1aohj-profile-readme",
 };
 
 const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({
@@ -89,7 +89,7 @@ function renderStatsCard(repos, topLangs) {
   const topLanguage = topLangs[0]?.name || "N/A";
 
   return `<svg width="495" height="195" viewBox="0 0 495 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">AO-CHII profile stats</title>
+    <title id="title">X1AOHJ profile stats</title>
     <desc id="desc">Self-generated GitHub profile statistics.</desc>
     <rect width="495" height="195" fill="#0d0d0d" />
     <polygon points="0,0 250,0 216,58 0,74" fill="#d92323" />
@@ -143,7 +143,7 @@ function renderLanguageCard(langs, totalLangBytes) {
   }).join("");
 
   return `<svg width="495" height="195" viewBox="0 0 495 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">AO-CHII language mix</title>
+    <title id="title">X1AOHJ language mix</title>
     <desc id="desc">Self-generated language distribution from GitHub Linguist byte counts.</desc>
     <rect width="495" height="195" fill="#0d0d0d" />
     <polygon points="0,0 260,0 220,58 0,74" fill="#d92323" />
@@ -213,7 +213,7 @@ function renderDashboard(repos, langs, totalLangBytes) {
   }).join("");
 
   return `<svg width="980" height="260" viewBox="0 0 980 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">AO-CHII profile dashboard</title>
+    <title id="title">X1AOHJ profile dashboard</title>
     <desc id="desc">Self-generated GitHub profile statistics and language distribution.</desc>
     <style>text{font-family:'Arial Black',Impact,'Franklin Gothic Heavy',sans-serif;font-weight:900;font-style:italic}</style>
     <rect width="980" height="260" fill="#0a0a0a" />

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/header.svg" alt="AO-CHII - Models / Vision / Agents / Tools" width="100%" />
+  <img src="./assets/header.svg" alt="X1AOHJ - Models / Vision / Agents / Tools" width="100%" />
 </p>
 
 <p align="center">
@@ -47,22 +47,22 @@
 </p>
 
 <p align="center">
-  <img width="98%" alt="Ao-chii 的 GitHub 数据概览" src="./assets/profile-dashboard.svg" />
+  <img width="98%" alt="X1aohj 的 GitHub 数据概览" src="./assets/profile-dashboard.svg" />
 </p>
 
 <p align="center">
-  <img width="98%" alt="连续提交" src="https://streak-stats.demolab.com?user=Ao-chii&hide_border=true&background=0A0A0A&border=5C0000&stroke=E60012&ring=E60012&fire=E60012&currStreakNum=F2F2F2&sideNums=F2F2F2&currStreakLabel=E60012&sideLabels=C9C9C9&dates=7B7B7B" />
+  <img width="98%" alt="连续提交" src="https://streak-stats.demolab.com?user=X1aohj&hide_border=true&background=0A0A0A&border=5C0000&stroke=E60012&ring=E60012&fire=E60012&currStreakNum=F2F2F2&sideNums=F2F2F2&currStreakLabel=E60012&sideLabels=C9C9C9&dates=7B7B7B" />
 </p>
 
 <p align="center">
-  <img width="98%" alt="贡献活动曲线" src="https://github-readme-activity-graph.vercel.app/graph?username=Ao-chii&bg_color=0A0A0A&color=E60012&line=E60012&point=F2F2F2&area=true&hide_border=true" />
+  <img width="98%" alt="贡献活动曲线" src="https://github-readme-activity-graph.vercel.app/graph?username=X1aohj&bg_color=0A0A0A&color=E60012&line=E60012&point=F2F2F2&area=true&hide_border=true" />
 </p>
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ao-chii/Ao-chii/output/github-contribution-grid-snake-dark.svg?v=2" />
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/Ao-chii/Ao-chii/output/github-contribution-grid-snake.svg?v=2" />
-    <img alt="贪吃蛇贡献图" src="https://raw.githubusercontent.com/Ao-chii/Ao-chii/output/github-contribution-grid-snake.svg?v=2" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake-dark.svg?v=2" />
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake.svg?v=2" />
+    <img alt="贪吃蛇贡献图" src="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake.svg?v=2" />
   </picture>
 </p>
 
@@ -76,8 +76,8 @@
   <a href="mailto:xiaohj1230@foxmail.com">
     <img alt="Email" src="https://img.shields.io/badge/Email-xiaohj1230@foxmail.com-0A0A0A?style=for-the-badge&logo=gmail&logoColor=F2F2F2&labelColor=E60012" />
   </a>
-  <a href="https://github.com/Ao-chii">
-    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-Ao--chii-0A0A0A?style=for-the-badge&logo=github&logoColor=F2F2F2&labelColor=E60012" />
+  <a href="https://github.com/X1aohj">
+    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-X1aohj-0A0A0A?style=for-the-badge&logo=github&logoColor=F2F2F2&labelColor=E60012" />
   </a>
 </p>
 

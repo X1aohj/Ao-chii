@@ -1,5 +1,5 @@
 <svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t d">
-  <title id="t">AO-CHII</title>
+  <title id="t">X1AOHJ</title>
   <desc id="d">红黑白 Persona 5 风格个人主页头图</desc>
 
   <defs>
@@ -71,16 +71,16 @@
     </g>
   </g>
 
-  <!-- 主标签 AO-CHII（白底黑字，从左砸入带回弹） -->
+  <!-- 主标签 X1AOHJ（白底黑字，从左砸入带回弹） -->
   <g>
     <animateTransform attributeName="transform" attributeType="XML" type="translate"
       values="-900,0;16,0;0,0" keyTimes="0;0.82;1" dur="0.8s"
       calcMode="spline" keySplines="0.12 0.82 0.2 1;0.5 0 0.3 1" fill="freeze" />
     <polygon points="68,54 566,36 548,158 50,178" fill="#f2f2f2" filter="url(#hs)" />
     <g transform="rotate(-2.3 306 110)">
-      <text x="104" y="140" fill="#e60012" class="p5-heavy" font-size="84" letter-spacing="2">AO-CHII</text>
+      <text x="104" y="140" fill="#e60012" class="p5-heavy" font-size="84" letter-spacing="2">X1AOHJ</text>
       <path d="M102 151L480 151" stroke="#e60012" stroke-width="8" stroke-linecap="square" />
-      <text x="94" y="132" fill="#0a0a0a" class="p5-heavy" font-size="84" letter-spacing="2">AO-CHII</text>
+      <text x="94" y="132" fill="#0a0a0a" class="p5-heavy" font-size="84" letter-spacing="2">X1AOHJ</text>
     </g>
   </g>
 
