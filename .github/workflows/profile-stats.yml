@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "37 */12 * * *"
   workflow_dispatch:
+  # 改了生成脚本就立刻重新出图；机器人提交只动 assets/，不会循环触发
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/scripts/**"
+      - ".github/workflows/profile-stats.yml"
 
 permissions:
   contents: write
@@ -32,15 +39,24 @@ jobs:
           PROFILE_STATS_OUT_DIR: assets
           GITHUB_TOKEN: ${{ github.token }}
 
-      - name: Commit updated profile stats
+      # 贪吃蛇用 P3 配色：第一个颜色是零贡献的格子，之后由浅到深
+      - name: Generate contribution snake
+        uses: Platane/snk/svg-only@v3
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: |
+            assets/p3/snake-dark.svg?palette=github-dark&color_snake=#e6f6ff&color_dots=#101d36,#173d70,#2569b8,#3a9be8,#5ad1ff
+            assets/p3/snake-light.svg?palette=github-light&color_snake=#0b1f4a&color_dots=#e3ebf6,#b4cdf0,#7aa8ec,#3d82e6,#1f6fe0
+
+      - name: Commit updated profile assets
         run: |
-          if git diff --quiet -- assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg assets/activity-graph.svg; then
-            echo "No profile stats changes."
+          git add assets
+          if git diff --cached --quiet; then
+            echo "No profile asset changes."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add assets/profile-stats.svg assets/profile-langs.svg assets/profile-dashboard.svg assets/activity-graph.svg
           git commit -m "Update profile stats snapshot"
           git push

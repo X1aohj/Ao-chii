@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { writeThemeAssets, BAR_DAYS, RADAR_DAYS } = require("./profile-themes");
 
 const owner = process.env.PROFILE_OWNER;
 const token = process.env.GITHUB_TOKEN;
@@ -10,6 +11,11 @@ if (!owner) {
   throw new Error("PROFILE_OWNER is required");
 }
 
+// 贡献数据只能走 GraphQL，必须带 token；Actions 里的 github.token 就够用
+if (!token) {
+  throw new Error("GITHUB_TOKEN is required");
+}
+
 fs.mkdirSync(outDir, { recursive: true });
 
 const baseHeaders = {
@@ -17,15 +23,6 @@ const baseHeaders = {
   "User-Agent": "x1aohj-profile-readme",
 };
 
-const esc = (value) => String(value).replace(/[&<>"']/g, (char) => ({
-  "&": "&amp;",
-  "<": "&lt;",
-  ">": "&gt;",
-  "\"": "&quot;",
-  "'": "&apos;",
-}[char]));
-
-const formatNumber = (value) => new Intl.NumberFormat("en-US").format(value);
 const pct = (value, total) => (total ? `${((value / total) * 100).toFixed(1)}%` : "0.0%");
 
 async function requestJson(url) {
@@ -56,6 +53,19 @@ async function requestJson(url) {
   throw new Error(lastError);
 }
 
+async function requestGraphql(query, variables) {
+  const response = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: { ...baseHeaders, Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ query, variables }),
+  });
+  const body = await response.json();
+  if (!response.ok || body.errors) {
+    throw new Error(`GraphQL ${response.status}: ${JSON.stringify(body.errors || body)}`);
+  }
+  return body.data;
+}
+
 async function listOwnerRepos() {
   const repos = [];
 
@@ -73,265 +83,41 @@ async function listOwnerRepos() {
   );
 }
 
-function metric(label, value, x, y) {
-  return `
-    <g transform="translate(${x},${y})">
-      <polygon points="0,0 190,-6 181,46 -8,52" fill="#111111" stroke="#732424" stroke-width="2" />
-      <text x="12" y="18" fill="#7b7b7b" font-family="Arial Black, Impact, sans-serif" font-size="11" font-weight="900">${esc(label)}</text>
-      <text x="12" y="41" fill="#ffffff" font-family="Arial Black, Impact, sans-serif" font-size="24" font-weight="900">${esc(value)}</text>
-    </g>`;
-}
+/*
+ * 一次查询取齐：按类型的贡献数给雷达，按天的贡献日历给活动柱。
+ * 公开事件接口已经不带 PushEvent 的提交数，而贡献日历会算上每个提交，打开私有贡献展示后还含私有仓库。
+ */
+async function fetchContributions() {
+  const to = new Date();
+  const from = new Date(to.getTime() - RADAR_DAYS * 86400000);
+  const data = await requestGraphql(`query($login: String!, $from: DateTime!, $to: DateTime!) {
+    user(login: $login) {
+      contributionsCollection(from: $from, to: $to) {
+        totalCommitContributions
+        totalPullRequestContributions
+        totalPullRequestReviewContributions
+        totalIssueContributions
+        totalRepositoryContributions
+        contributionCalendar { weeks { contributionDays { contributionCount } } }
+      }
+    }
+  }`, { login: owner, from: from.toISOString(), to: to.toISOString() });
 
-function renderStatsCard(repos, topLangs) {
-  const totalStars = repos.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
-  const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
-  const activeRepos = repos.filter((repo) => new Date(repo.pushed_at || 0).getTime() >= oneYearAgo).length;
-  const topLanguage = topLangs[0]?.name || "N/A";
-
-  return `<svg width="495" height="195" viewBox="0 0 495 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">X1AOHJ profile stats</title>
-    <desc id="desc">Self-generated GitHub profile statistics.</desc>
-    <rect width="495" height="195" fill="#0d0d0d" />
-    <polygon points="0,0 250,0 216,58 0,74" fill="#d92323" />
-    <polygon points="386,0 495,0 495,195 332,195" fill="#732424" opacity="0.7" />
-    <path d="M-20 160L190 -20M390 214L520 20" stroke="#ffffff" stroke-width="8" opacity="0.11" />
-    <text x="24" y="38" fill="#ffffff" font-family="Arial Black, Impact, sans-serif" font-size="24" font-weight="900">PROFILE STATS</text>
-    ${metric("PUBLIC REPOS", formatNumber(repos.length), 34, 78)}
-    ${metric("TOTAL STARS", formatNumber(totalStars), 270, 78)}
-    ${metric("ACTIVE 12M", formatNumber(activeRepos), 34, 136)}
-    ${metric("TOP LANG", topLanguage.toUpperCase(), 270, 136)}
-  </svg>`;
-}
-
-function shortLanguageName(name) {
-  return ({
-    TypeScript: "TS",
-    JavaScript: "JS",
-    Dockerfile: "Docker",
-  }[name] || name);
-}
-
-function renderLanguageCard(langs, totalLangBytes) {
-  const colors = ["#d92323", "#ffffff", "#732424", "#7b7b7b", "#ff5555"];
-  const topLangs = langs.slice(0, 4);
-  const otherBytes = langs.slice(4).reduce((sum, lang) => sum + lang.bytes, 0);
-  const displayLangs = otherBytes > 0
-    ? [...topLangs, { name: "Other", bytes: otherBytes }]
-    : topLangs;
-
-  let cursor = 32;
-  const segments = displayLangs.map((lang, index) => {
-    const width = (lang.bytes / Math.max(totalLangBytes, 1)) * 431;
-    const segment = `<rect x="${cursor.toFixed(1)}" y="66" width="${width.toFixed(1)}" height="15" fill="${colors[index % colors.length]}" />`;
-    cursor += width;
-    return segment;
-  }).join("");
-
-  const rows = displayLangs.map((lang, index) => {
-    const x = index % 2 === 0 ? 34 : 260;
-    const y = 96 + Math.floor(index / 2) * 32;
-    const color = colors[index % colors.length];
-    const swatchStroke = color === "#ffffff" ? "#7b7b7b" : color;
-
-    return `
-    <g transform="translate(${x},${y})">
-      <polygon points="0,0 200,-5 194,26 -6,31" fill="#111111" stroke="#732424" stroke-width="2" />
-      <rect x="12" y="8" width="10" height="10" fill="${color}" stroke="${swatchStroke}" stroke-width="1.5" />
-      <text x="32" y="19" fill="#ffffff" font-family="Arial Black, Impact, sans-serif" font-size="13" font-weight="900">${esc(shortLanguageName(lang.name).toUpperCase())}</text>
-      <text x="178" y="19" fill="#7b7b7b" font-family="Arial Black, Impact, sans-serif" font-size="12" font-weight="900" text-anchor="end">${pct(lang.bytes, totalLangBytes)}</text>
-    </g>`;
-  }).join("");
-
-  return `<svg width="495" height="195" viewBox="0 0 495 195" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">X1AOHJ language mix</title>
-    <desc id="desc">Self-generated language distribution from GitHub Linguist byte counts.</desc>
-    <rect width="495" height="195" fill="#0d0d0d" />
-    <polygon points="0,0 260,0 220,58 0,74" fill="#d92323" />
-    <polygon points="386,0 495,0 495,195 332,195" fill="#732424" opacity="0.7" />
-    <path d="M-20 160L190 -20M390 214L520 20" stroke="#ffffff" stroke-width="8" opacity="0.11" />
-    <text x="24" y="38" fill="#ffffff" font-family="Arial Black, Impact, sans-serif" font-size="24" font-weight="900">LANGUAGE MIX</text>
-    <rect x="32" y="66" width="431" height="15" fill="#111111" stroke="#732424" stroke-width="2" />
-    ${segments}
-    ${rows || `<text x="34" y="112" fill="#7b7b7b" font-family="Arial, sans-serif" font-size="13">No language data found.</text>`}
-  </svg>`;
-}
-
-function renderDashboard(repos, langs, totalLangBytes) {
-  const totalStars = repos.reduce((sum, repo) => sum + (repo.stargazers_count || 0), 0);
-  const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
-  const activeRepos = repos.filter((repo) => new Date(repo.pushed_at || 0).getTime() >= oneYearAgo).length;
-  const colors = ["#e60012", "#f2f2f2", "#8a0a14", "#7b7b7b", "#ff5555"];
-  const topLangs = langs.slice(0, 4);
-  const otherBytes = langs.slice(4).reduce((sum, lang) => sum + lang.bytes, 0);
-  const displayLangs = otherBytes > 0
-    ? [...topLangs, { name: "Other", bytes: otherBytes }]
-    : topLangs;
-
-  const dossierItems = [
-    ["REPOS", formatNumber(repos.length)],
-    ["ACTIVE 12M", formatNumber(activeRepos)],
-    ["STARS", formatNumber(totalStars)],
-    ["TOP LANG", shortLanguageName(langs[0]?.name || "N/A").toUpperCase()],
-  ];
-
-  const dossier = dossierItems.map(([label, value], index) => {
-    const x = 34 + (index % 2) * 185;
-    const y = 82 + Math.floor(index / 2) * 68;
-    return `
-    <g transform="translate(${x},${y})">
-      <polygon points="0,0 162,-5 154,49 -8,55" fill="#111111" stroke="#8a0a14" stroke-width="2" />
-      <text x="12" y="18" fill="#7b7b7b" font-family="Arial Black, Impact, sans-serif" font-size="11" font-weight="900">${esc(label)}</text>
-      <text x="12" y="43" fill="#f2f2f2" font-family="Arial Black, Impact, sans-serif" font-size="25" font-weight="900">${esc(value)}</text>
-    </g>`;
-  }).join("");
-
-  let cursor = 506;
-  const segments = displayLangs.map((lang, index) => {
-    const width = (lang.bytes / Math.max(totalLangBytes, 1)) * 420;
-    const segment = `<rect x="${cursor.toFixed(1)}" y="88" width="${width.toFixed(1)}" height="18" fill="${colors[index % colors.length]}" />`;
-    cursor += width;
-    return segment;
-  }).join("");
-
-  const languageChips = displayLangs.map((lang, index) => {
-    const major = index === 0;
-    const x = major ? 506 : 506 + ((index - 1) % 2) * 215;
-    const y = major ? 120 : 166 + Math.floor((index - 1) / 2) * 42;
-    const width = major ? 420 : 202;
-    const color = colors[index % colors.length];
-    const swatchStroke = color === "#ffffff" ? "#7b7b7b" : color;
-    const name = esc(shortLanguageName(lang.name).toUpperCase());
-    const percent = pct(lang.bytes, totalLangBytes);
-
-    return `
-    <g transform="translate(${x},${y})">
-      <polygon points="0,0 ${width},-6 ${width - 8},32 -8,38" fill="${major ? "#151515" : "#111111"}" stroke="#8a0a14" stroke-width="2" />
-      <rect x="14" y="${major ? 10 : 9}" width="${major ? 13 : 10}" height="${major ? 13 : 10}" fill="${color}" stroke="${swatchStroke}" stroke-width="1.5" />
-      <text x="${major ? 38 : 31}" y="${major ? 24 : 21}" fill="#f2f2f2" font-family="Arial Black, Impact, sans-serif" font-size="${major ? 19 : 13}" font-weight="900">${name}</text>
-      <text x="${width - 20}" y="${major ? 24 : 21}" fill="#7b7b7b" font-family="Arial Black, Impact, sans-serif" font-size="${major ? 16 : 12}" font-weight="900" text-anchor="end">${percent}</text>
-    </g>`;
-  }).join("");
-
-  return `<svg width="980" height="260" viewBox="0 0 980 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">X1AOHJ profile dashboard</title>
-    <desc id="desc">Self-generated GitHub profile statistics and language distribution.</desc>
-    <style>text{font-family:'Arial Black',Impact,'Franklin Gothic Heavy',sans-serif;font-weight:900;font-style:italic}</style>
-    <rect width="980" height="260" fill="#0a0a0a" />
-    <polygon points="0,0 424,0 364,72 0,88" fill="#e60012" />
-    <polygon points="760,0 980,0 980,260 684,260" fill="#8a0a14" opacity="0.7" />
-    <path d="M-30 220L220 -20M728 292L1014 -22" stroke="#f2f2f2" stroke-width="10" opacity="0.11" />
-    <polygon points="458,0 530,0 454,260 382,260" fill="#0a0a0a" />
-    <polygon points="458,0 472,0 396,260 382,260" fill="#e60012" />
-    <polygon points="514,0 530,0 454,260 438,260" fill="#8a0a14" opacity="0.9" />
-    <g transform="skewX(-8)">
-      <text x="38" y="45" fill="#f2f2f2" font-size="26">PROFILE DOSSIER</text>
-      <text x="518" y="45" fill="#f2f2f2" font-size="26">LANGUAGE MIX</text>
-    </g>
-    ${dossier}
-    <rect x="506" y="88" width="420" height="18" fill="#111111" stroke="#8a0a14" stroke-width="2" />
-    ${segments}
-    ${languageChips || `<text x="506" y="144" fill="#7b7b7b" font-family="Arial, sans-serif" font-size="14">No language data found.</text>`}
-    <g transform="translate(456,130)">
-      <g>
-        <animateTransform attributeName="transform" attributeType="XML" type="scale" values="0.95;1.05;0.95" dur="3.2s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
-        <polygon points="0,-38 6.1,-14.7 26.9,-26.9 14.7,-6.1 38,0 14.7,6.1 26.9,26.9 6.1,14.7 0,38 -6.1,14.7 -26.9,26.9 -14.7,6.1 -38,0 -14.7,-6.1 -26.9,-26.9 -6.1,-14.7" fill="#e60012" stroke="#f2f2f2" stroke-width="4" />
-        <line x1="-15" y1="-15" x2="15" y2="15" stroke="#f2f2f2" stroke-width="10" stroke-linecap="round" />
-        <line x1="-15" y1="15" x2="15" y2="-15" stroke="#f2f2f2" stroke-width="10" stroke-linecap="round" />
-      </g>
-    </g>
-  </svg>`;
-}
-
-async function listPublicEvents() {
-  const events = [];
-
-  for (let page = 1; page <= 3; page += 1) {
-    const url = `https://api.github.com/users/${encodeURIComponent(owner)}/events/public?per_page=100&page=${page}`;
-    const data = await requestJson(url);
-    if (!Array.isArray(data) || data.length === 0) break;
-    events.push(...data);
-    if (data.length < 100) break;
-  }
-
-  return events;
-}
-
-function renderActivityGraph(events) {
-  const dayCount = 31;
-  const now = new Date();
-  const endDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  const buckets = new Array(dayCount).fill(0);
-
-  for (const event of events) {
-    const created = new Date(event.created_at);
-    const day = Date.UTC(created.getUTCFullYear(), created.getUTCMonth(), created.getUTCDate());
-    const index = dayCount - 1 - Math.round((endDay - day) / 86400000);
-    if (index < 0 || index >= dayCount) continue;
-    const commits = event.type === "PushEvent" ? (event.payload?.commits?.length || 1) : 1;
-    buckets[index] += Math.max(1, commits);
-  }
-
-  const total = buckets.reduce((sum, value) => sum + value, 0);
-  const activeDays = buckets.filter((value) => value > 0).length;
-  const peak = Math.max(1, ...buckets);
-  const left = 56;
-  const right = 944;
-  const top = 96;
-  const bottom = 196;
-  const x = (index) => left + (index / (dayCount - 1)) * (right - left);
-  const y = (value) => bottom - (value / peak) * (bottom - top);
-  const coordinates = buckets.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`);
-
-  const area = `M ${left},${bottom} L ${coordinates.join(" L ")} L ${right},${bottom} Z`;
-  const dots = buckets.map((value, index) => value > 0
-    ? `<circle cx="${x(index).toFixed(1)}" cy="${y(value).toFixed(1)}" r="3" fill="#f2f2f2" />`
-    : "").join("");
-  const grid = [0, 1, 2, 3, 4].map((step) => {
-    const gy = (top + ((bottom - top) * step) / 4).toFixed(1);
-    return `<line x1="${left}" y1="${gy}" x2="${right}" y2="${gy}" stroke="#7b7b7b" stroke-width="1" opacity="0.28" />`;
-  }).join("");
-  const label = (index) => {
-    const date = new Date(endDay - (dayCount - 1 - index) * 86400000);
-    return `${String(date.getUTCMonth() + 1).padStart(2, "0")}/${String(date.getUTCDate()).padStart(2, "0")}`;
+  const collection = data.user.contributionsCollection;
+  const days = collection.contributionCalendar.weeks.flatMap((week) => week.contributionDays.map((day) => day.contributionCount));
+  return {
+    buckets: days.slice(-BAR_DAYS),
+    activity: {
+      commits: collection.totalCommitContributions,
+      pullRequests: collection.totalPullRequestContributions,
+      reviews: collection.totalPullRequestReviewContributions,
+      issues: collection.totalIssueContributions,
+      repositories: collection.totalRepositoryContributions,
+    },
   };
-
-  return `<svg width="980" height="260" viewBox="0 0 980 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-    <title id="title">X1AOHJ activity graph</title>
-    <desc id="desc">Self-generated GitHub public activity for the last 31 days.</desc>
-    <style>text{font-family:'Arial Black',Impact,'Franklin Gothic Heavy',sans-serif;font-weight:900;font-style:italic}</style>
-    <rect width="980" height="260" fill="#0a0a0a" />
-    <polygon points="0,0 424,0 364,72 0,88" fill="#e60012" />
-    <polygon points="760,0 980,0 980,260 684,260" fill="#8a0a14" opacity="0.25" />
-    <path d="M-30 220L220 -20M728 292L1014 -22" stroke="#f2f2f2" stroke-width="10" opacity="0.11" />
-    <g transform="skewX(-8)">
-      <text x="38" y="45" fill="#f2f2f2" font-size="26">ACTIVITY GRAPH</text>
-    </g>
-    <text x="942" y="42" fill="#f2f2f2" opacity="0.72" font-size="13" text-anchor="end">PUBLIC EVENTS / LAST 31 DAYS</text>
-    ${grid}
-    <path d="${area}" fill="#e60012" opacity="0.24" />
-    <polyline points="${coordinates.join(" ")}" fill="none" stroke="#e60012" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" />
-    ${dots}
-    <text x="${left}" y="216" fill="#7b7b7b" font-size="12">${esc(label(0))}</text>
-    <text x="${((left + right) / 2).toFixed(1)}" y="216" fill="#7b7b7b" font-size="12" text-anchor="middle">${esc(label(15))}</text>
-    <text x="${right}" y="216" fill="#7b7b7b" font-size="12" text-anchor="end">${esc(label(30))}</text>
-    <text x="38" y="244" fill="#7b7b7b" font-size="13">TOTAL <tspan fill="#f2f2f2" font-size="17">${esc(formatNumber(total))}</tspan></text>
-    <text x="360" y="244" fill="#7b7b7b" font-size="13">ACTIVE <tspan fill="#f2f2f2" font-size="17">${esc(activeDays)}D</tspan></text>
-    <text x="640" y="244" fill="#7b7b7b" font-size="13">PEAK <tspan fill="#f2f2f2" font-size="17">${esc(peak)}/DAY</tspan></text>
-  </svg>`;
-}
-
-async function generateActivityGraph() {
-  const events = await listPublicEvents();
-  fs.writeFileSync(path.join(outDir, "activity-graph.svg"), renderActivityGraph(events).trim());
-  console.log(`Generated activity graph from ${events.length} public events.`);
 }
 
 async function main() {
-  if (process.env.PROFILE_STATS_ACTIVITY_ONLY === "1") {
-    await generateActivityGraph();
-    return;
-  }
-
   const repos = await listOwnerRepos();
   const languages = new Map();
   const failedRepos = [];
@@ -356,20 +142,13 @@ async function main() {
   const sortedLangs = [...languages.entries()]
     .map(([name, bytes]) => ({ name, bytes }))
     .sort((a, b) => b.bytes - a.bytes);
-  const topLangs = sortedLangs.slice(0, 6);
 
-  fs.writeFileSync(path.join(outDir, "profile-stats.svg"), renderStatsCard(repos, topLangs).trim());
-  fs.writeFileSync(path.join(outDir, "profile-langs.svg"), renderLanguageCard(sortedLangs, totalLangBytes).trim());
-  fs.writeFileSync(path.join(outDir, "profile-dashboard.svg"), renderDashboard(repos, sortedLangs, totalLangBytes).trim());
+  const { buckets, activity } = await fetchContributions();
+  console.log(`Counted ${buckets.reduce((sum, value) => sum + value, 0)} contributions in ${BAR_DAYS} days; ${RADAR_DAYS}-day activity ${JSON.stringify(activity)}`);
 
-  try {
-    await generateActivityGraph();
-  } catch (error) {
-    console.warn(`Skipped activity graph: ${error.message}`);
-  }
-
-  console.log(`Generated profile cards for ${repos.length} public non-fork repositories.`);
-  console.log(topLangs.map((lang) => `${lang.name} ${pct(lang.bytes, totalLangBytes)}`).join(", "));
+  const themed = writeThemeAssets(outDir, { repos, langs: sortedLangs, totalLangBytes, buckets, activity });
+  console.log(`Generated ${themed.length} themed assets for ${repos.length} public non-fork repositories.`);
+  console.log(sortedLangs.slice(0, 6).map((lang) => `${lang.name} ${pct(lang.bytes, totalLangBytes)}`).join(", "));
 }
 
 main().catch((error) => {

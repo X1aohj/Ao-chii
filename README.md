@@ -1,86 +1,33 @@
-<p align="center">
-  <img src="./assets/header.svg" alt="X1AOHJ - Models / Vision / Agents / Tools" width="100%" />
-</p>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/p3/header-dark.svg" />
+  <img src="./assets/p3/header-light.svg" width="100%" alt="X1AOHJ — Models · Vision · Agents · Tools" />
+</picture>
 
-<p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Anton&size=30&duration=2800&pause=700&color=E60012&background=00000000&center=true&vCenter=true&width=820&height=60&lines=STEAL+THE+NOISE;SHIP+THE+SIGNAL;TAKE+YOUR+HEART" alt="标语" />
-</p>
+## About
 
-<img src="./assets/divider.svg" width="100%" alt="" />
+软件工程在读，方向是 **模型、视觉与 Agent 工具链**。
 
-<p align="center">
-  <img src="./assets/sec-about.svg" width="360" alt="关于 / ABOUT" />
-</p>
+## Stack
 
-<div align="center">
+`Python` · `Java` · `C / C++` · `JavaScript / Vue` · `Linux` · `Git`
 
- **MODELS / VISION / AGENTS / TOOLS** · **STORY / MOTION / PLAY / STYLE**
+## Status
 
-`STEAL THE NOISE` / `SHIP THE SIGNAL`
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/p3/dashboard-dark.svg" />
+  <img src="./assets/p3/dashboard-light.svg" width="100%" alt="GitHub 数据：仓库、语言分布与最近 31 天活动" />
+</picture>
 
-</div>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/p3/radar-dark.svg" />
+  <img src="./assets/p3/radar-light.svg" width="100%" alt="最近 90 天的贡献构成：提交、PR、Code Review、Issue、新建仓库" />
+</picture>
 
-<img src="./assets/divider.svg" width="100%" alt="" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/p3/snake-dark.svg" />
+  <img src="./assets/p3/snake-light.svg" width="100%" alt="贡献格子贪吃蛇" />
+</picture>
 
-<p align="center">
-  <img src="./assets/sec-stack.svg" width="360" alt="技术栈 / STACK" />
-</p>
+## Contact
 
-<p align="center">
-  <img alt="Java" src="https://img.shields.io/badge/Java-0A0A0A?style=for-the-badge&logo=openjdk&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="Python" src="https://img.shields.io/badge/Python-0A0A0A?style=for-the-badge&logo=python&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="C" src="https://img.shields.io/badge/C-0A0A0A?style=for-the-badge&logo=c&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="C++" src="https://img.shields.io/badge/C%2B%2B-0A0A0A?style=for-the-badge&logo=cplusplus&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-0A0A0A?style=for-the-badge&logo=javascript&logoColor=F2F2F2&labelColor=E60012" />
-</p>
-
-<p align="center">
-  <img alt="Vue.js" src="https://img.shields.io/badge/Vue.js-0A0A0A?style=for-the-badge&logo=vuedotjs&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="Git" src="https://img.shields.io/badge/Git-0A0A0A?style=for-the-badge&logo=git&logoColor=F2F2F2&labelColor=E60012" />
-  <img alt="Linux" src="https://img.shields.io/badge/Linux-0A0A0A?style=for-the-badge&logo=linux&logoColor=F2F2F2&labelColor=E60012" />
-</p>
-
-<img src="./assets/divider.svg" width="100%" alt="" />
-
-<p align="center">
-  <img src="./assets/sec-stats.svg" width="360" alt="数据 / STATS" />
-</p>
-
-<p align="center">
-  <img width="98%" alt="X1aohj 的 GitHub 数据概览" src="./assets/profile-dashboard.svg" />
-</p>
-
-<p align="center">
-  <img width="98%" alt="连续提交" src="https://streak-stats.demolab.com?user=X1aohj&hide_border=true&background=0A0A0A&border=5C0000&stroke=E60012&ring=E60012&fire=E60012&currStreakNum=F2F2F2&sideNums=F2F2F2&currStreakLabel=E60012&sideLabels=C9C9C9&dates=7B7B7B" />
-</p>
-
-<p align="center">
-  <img width="98%" alt="贡献活动曲线" src="./assets/activity-graph.svg" />
-</p>
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake-dark.svg?v=2" />
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake.svg?v=2" />
-    <img alt="贪吃蛇贡献图" src="https://raw.githubusercontent.com/X1aohj/X1aohj/output/github-contribution-grid-snake.svg?v=2" />
-  </picture>
-</p>
-
-<img src="./assets/divider.svg" width="100%" alt="" />
-
-<p align="center">
-  <img src="./assets/sec-connect.svg" width="360" alt="联系 / CONNECT" />
-</p>
-
-<p align="center">
-  <a href="mailto:xiaohj1230@foxmail.com">
-    <img alt="Email" src="https://img.shields.io/badge/Email-xiaohj1230@foxmail.com-0A0A0A?style=for-the-badge&logo=gmail&logoColor=F2F2F2&labelColor=E60012" />
-  </a>
-  <a href="https://github.com/X1aohj">
-    <img alt="GitHub" src="https://img.shields.io/badge/GitHub-X1aohj-0A0A0A?style=for-the-badge&logo=github&logoColor=F2F2F2&labelColor=E60012" />
-  </a>
-</p>
-
-<p align="center">
-  <img src="./assets/footer.svg" width="100%" alt="未完待续 / TO BE CONTINUED" />
-</p>
+[xiaohj1230@foxmail.com](mailto:xiaohj1230@foxmail.com) · [h2ro.cn](https://h2ro.cn)
